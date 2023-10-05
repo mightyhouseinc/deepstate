@@ -10,9 +10,7 @@ class CrashTest(deepstate_base.DeepStateTestCase):
     self.assertEqual(r, 0)
 
     self.assertTrue("Passed: Crash_SegFault" in output)
-    foundCrashSave = False
-    for line in output.split("\n"):
-      if ("Saved test case" in line) and (".crash" in line):
-        foundCrashSave = True
+    foundCrashSave = any(("Saved test case" in line) and (".crash" in line)
+                         for line in output.split("\n"))
     self.assertTrue(foundCrashSave)
 

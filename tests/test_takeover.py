@@ -13,8 +13,6 @@ class TakeOverTest(deepstate_base.DeepStateTestCase):
     self.assertTrue("bye" in output)
     self.assertTrue("was not greater than" in output)
 
-    foundPassSave = False
-    for line in output.split("\n"):
-      if ("Saved test case" in line) and (".pass" in line):
-        foundPassSave = True
+    foundPassSave = any(("Saved test case" in line) and (".pass" in line)
+                        for line in output.split("\n"))
     self.assertTrue(foundPassSave)

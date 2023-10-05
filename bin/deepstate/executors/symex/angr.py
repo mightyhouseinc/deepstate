@@ -320,14 +320,13 @@ def run_test(project, test, apis, run_state, should_call_state=True):
 
 def find_symbol_ea(project, name):
   try:
-    ea = project.kb.labels.lookup(name)
-    if ea:
+    if ea := project.kb.labels.lookup(name):
       return ea
   except:
     pass
 
   try:
-    return project.kb.labels.lookup("_{}".format(name))
+    return project.kb.labels.lookup(f"_{name}")
   except:
     pass
 
@@ -472,13 +471,9 @@ def main_unit_test(args, project):
   else:
 
     test = [t for t in tests if t.name == args.which_test]
-    if len(test) == 0:
+    if not test or len(test) > 1:
       L.error()
       exit(1)
-    elif len(test) > 1:
-      L.error()
-      exit(1)
-
     L.info("Running `%s` test across %d workers", test, args.num_workers)
     run_test(project, test[0], apis, run_state)
 
@@ -514,5 +509,5 @@ def main():
     return main_unit_test(args, project)
 
 
-if "__main__" == __name__:
+if __name__ == "__main__":
   exit(main())

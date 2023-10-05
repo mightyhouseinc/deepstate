@@ -65,7 +65,7 @@ class Angora(FuzzerFrontend):
     super(Angora, cls).parse_args()
 
 
-  def compile(self) -> None: # type: ignore
+  def compile(self) -> None:  # type: ignore
     """
     Compilation interface provides extra support for generating taint policy for
     blacklisted ABI calls with DFsan.
@@ -112,9 +112,12 @@ class Angora(FuzzerFrontend):
 
     taint_flags: List[str] = ["-ldeepstate_taint"]
     if self.compiler_args:
-      taint_flags += [arg for arg in self.compiler_args.split(' ')]
+      taint_flags += list(self.compiler_args.split(' '))
     L.info("Compiling %s for %s with taint tracking", self.compile_test, self.name)
-    super().compile(taint_path, taint_flags, self.out_test_name + ".taint", env=env)
+    super().compile(taint_path,
+                    taint_flags,
+                    f"{self.out_test_name}.taint",
+                    env=env)
 
     self.taint_binary = self.binary
     self.binary = None
@@ -128,9 +131,9 @@ class Angora(FuzzerFrontend):
 
     fast_flags: List[str] = ["-ldeepstate_fast"]
     if self.compiler_args:
-      fast_flags += [arg for arg in self.compiler_args.split(" ")]
+      fast_flags += list(self.compiler_args.split(" "))
     L.info("Compiling %s for %s with light instrumentation.", self.compile_test, self.name)
-    super().compile(fast_path, fast_flags, self.out_test_name + ".fast", env=env)
+    super().compile(fast_path, fast_flags, f"{self.out_test_name}.fast", env=env)
 
 
   def pre_exec(self):
@@ -167,22 +170,23 @@ class Angora(FuzzerFrontend):
 
   @property
   def cmd(self):
-    cmd_list: List[str] = list()
-
-    # guaranteed arguments
-    cmd_list.extend([
-      "--mode", "llvm",  # TODO, add pin support
-      "--track", os.path.abspath(self.taint_binary),
-      "--memory_limit", str(self.mem_limit),
-      "--output", self.output_test_dir,  # auto-create, not reusable
-      "--sync_afl"
-    ])
+    cmd_list: List[str] = [
+        "--mode",
+        "llvm",
+        "--track",
+        os.path.abspath(self.taint_binary),
+        "--memory_limit",
+        str(self.mem_limit),
+        "--output",
+        self.output_test_dir,
+        "--sync_afl",
+    ]
 
     for key, val in self.fuzzer_args:
       if len(key) == 1:
-        cmd_list.append('-{}'.format(key))
+        cmd_list.append(f'-{key}')
       else:
-        cmd_list.append('--{}'.format(key))
+        cmd_list.append(f'--{key}')
       if val is not None:
         cmd_list.append(val)
 

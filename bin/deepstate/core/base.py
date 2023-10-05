@@ -105,7 +105,8 @@ class AnalysisBackend(object):
     if cls.parser is not None:
       parser: argparse.ArgumentParser = cls.parser
     else:
-      parser = argparse.ArgumentParser(description="Use {} as a backend for DeepState".format(cls.NAME))
+      parser = argparse.ArgumentParser(
+          description=f"Use {cls.NAME} as a backend for DeepState")
 
     # Compilation/instrumentation support, only if COMPILER is set in EXECUTABLES
     # TODO: extends compilation interface for symex engines that "compile" source to
@@ -200,7 +201,7 @@ class AnalysisBackend(object):
       logger.setLevel(LOG_LEVEL_INT_TO_STR[_args["min_log_level"]])
     else:
       L.debug("Using log level from $DEEPSTATE_LOG.")
-      
+
     cls._ARGS = args
     return cls._ARGS
 
@@ -241,13 +242,9 @@ class AnalysisBackend(object):
 
     for section, kv in parser._sections.items(): # type: ignore
 
-      # if `include_sections` is not set, parse only from allowed_sections
-      if not include_sections:
-        if section not in allowed_sections:
+      if section not in allowed_sections or section in reserved_sections:
+        if not include_sections:
           continue
-        elif section in reserved_sections:
-          continue
-
       # if `include_sections`, keys are now all section names
       if include_sections:
         _context = context[section] = dict()

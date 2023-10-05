@@ -51,7 +51,7 @@ class LibFuzzer(FuzzerFrontend):
 
     flags: List[str] = ["-ldeepstate_LF", "-fsanitize=fuzzer,undefined"]
     if self.compiler_args:
-      flags += [arg for arg in self.compiler_args.split(" ")]
+      flags += list(self.compiler_args.split(" "))
     super().compile(lib_path, flags, self.out_test_name)
 
 
@@ -90,33 +90,27 @@ class LibFuzzer(FuzzerFrontend):
     Initializes a command for an in-process libFuzzer instance that runs
     indefinitely until an interrupt.
     """
-    cmd_list: List[str] = list()
-
-    # guaranteed arguments
-    cmd_list.extend([
-      "-rss_limit_mb={}".format(self.mem_limit),
-      "-max_len={}".format(self.max_input_size),
-      "-artifact_prefix={}".format(self.crash_dir + "/"),
-      # "-jobs={}".format(0),
-      # "-workers={}".format(1),
-      # "-fork=1",
-      "-reload=1",
-      "-runs=-1",
-      "-print_final_stats=1"
-    ])
+    cmd_list: List[str] = [
+        f"-rss_limit_mb={self.mem_limit}",
+        f"-max_len={self.max_input_size}",
+        f"-artifact_prefix={self.crash_dir}/",
+        "-reload=1",
+        "-runs=-1",
+        "-print_final_stats=1",
+    ]
 
     for key, val in self.fuzzer_args:
       if val is not None:
-        cmd_list.append('-{}={}'.format(key, val))
+        cmd_list.append(f'-{key}={val}')
       else:
-        cmd_list.append('-{}'.format(key))
+        cmd_list.append(f'-{key}')
 
     # optional arguments:
     if self.dictionary:
-      cmd_list.append("-dict={}".format(self.dictionary))
+      cmd_list.append(f"-dict={self.dictionary}")
 
     if self.exec_timeout:
-      cmd_list.append("-timeout={}".format(self.exec_timeout / 1000))
+      cmd_list.append(f"-timeout={self.exec_timeout / 1000}")
 
     # must be here, this are positional args
     cmd_list.append(self.push_dir)  # no auto-create, reusable

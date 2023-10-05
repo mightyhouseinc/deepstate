@@ -57,7 +57,7 @@ class Honggfuzz(FuzzerFrontend):
       flags = ["-ldeepstate_HFUZZ"]
 
     if self.compiler_args:
-      flags += [arg for arg in self.compiler_args.split(" ")]
+      flags += list(self.compiler_args.split(" "))
     super().compile(lib_path, flags, self.out_test_name)
 
 
@@ -75,18 +75,18 @@ class Honggfuzz(FuzzerFrontend):
 
   @property
   def cmd(self):
-    cmd_list: List[str] = list()
-
-    # guaranteed arguments
-    cmd_list.extend([
-      "--workspace", self.output_test_dir,
-      "--output", self.push_dir,  # auto-create, reusable
-      "--crashdir", self.crash_dir,
-      # "--logfile", os.path.join(self.output_test_dir, "hfuzz_log.txt"),
-      # "--verbose",
-      "--rlimit_rss", str(self.mem_limit),
-      "--threads", "1"
-    ])
+    cmd_list: List[str] = [
+        "--workspace",
+        self.output_test_dir,
+        "--output",
+        self.push_dir,
+        "--crashdir",
+        self.crash_dir,
+        "--rlimit_rss",
+        str(self.mem_limit),
+        "--threads",
+        "1",
+    ]
 
     if self.max_input_size == 0:
       cmd_list.extend(["--max_file_size", "1099511627776"])  # use 1TiB as unlimited
@@ -99,9 +99,9 @@ class Honggfuzz(FuzzerFrontend):
 
     for key, val in self.fuzzer_args:
       if len(key) == 1:
-        cmd_list.append('-{}'.format(key))
+        cmd_list.append(f'-{key}')
       else:
-        cmd_list.append('--{}'.format(key))
+        cmd_list.append(f'--{key}')
       if val is not None:
         cmd_list.append(val)
 
