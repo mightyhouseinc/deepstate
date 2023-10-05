@@ -24,8 +24,8 @@ def import_fuzzers(pkg_name):
   """
   package = sys.modules[pkg_name]
   return [
-    importlib.import_module(pkg_name + '.' + submod)
-    for _, submod, _ in pkgutil.walk_packages(package.__path__)
+      importlib.import_module(f'{pkg_name}.{submod}')
+      for _, submod, _ in pkgutil.walk_packages(package.__path__)
   ]
 
 __all__ = import_fuzzers(__name__)

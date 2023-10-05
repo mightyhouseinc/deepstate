@@ -25,7 +25,7 @@ class CrashFuzzerTest(deepstate_base.DeepStateFuzzerTestCase):
 
       # run command
       (r, output) = logrun.logrun([deepstate] + arguments, output_log_file, 360)
-      compiled_files = glob(output_test_name + '*')
+      compiled_files = glob(f'{output_test_name}*')
 
       # check output
       self.assertEqual(r, 0)
@@ -33,10 +33,13 @@ class CrashFuzzerTest(deepstate_base.DeepStateFuzzerTestCase):
         self.assertTrue(path.isfile(compiled_file))
 
       # return compiled file(s)
-      # if Angora fuzzer, file.taint should be before file.fast 
-      if any([compiled_file.endswith('.taint.angora') for compiled_file in compiled_files]):
-        compiled_files = sorted(compiled_files, reverse=True) 
+      # if Angora fuzzer, file.taint should be before file.fast
+      if any(
+          compiled_file.endswith('.taint.angora')
+          for compiled_file in compiled_files):
+        compiled_files = sorted(compiled_files, reverse=True)
       return compiled_files
+
 
 
     def crash_found(output):
@@ -59,7 +62,7 @@ class CrashFuzzerTest(deepstate_base.DeepStateFuzzerTestCase):
       # prepare args
       _, output_log_file = mkstemp(dir=tempdir)
       output_test_dir = mkdtemp(dir=tempdir)
-      
+
       arguments = [
         "--output_test_dir", output_test_dir
       ] + compiled_files

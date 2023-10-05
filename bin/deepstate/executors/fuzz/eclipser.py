@@ -52,7 +52,7 @@ class Eclipser(FuzzerFrontend):
     subprocess.call([self.EXECUTABLES["RUNNER"], self.fuzzer_exe, "fuzz", "--help"])
 
 
-  def compile(self) -> None: # type: ignore
+  def compile(self) -> None:  # type: ignore
     """
     Eclipser actually doesn't need instrumentation, but we still implement
     for consistency.
@@ -61,7 +61,7 @@ class Eclipser(FuzzerFrontend):
 
     flags: List[str] = ["-ldeepstate"]
     if self.compiler_args:
-      flags += [arg for arg in self.compiler_args.split(" ")]
+      flags += list(self.compiler_args.split(" "))
     super().compile(lib_path, flags, self.out_test_name)
 
 
@@ -93,7 +93,7 @@ class Eclipser(FuzzerFrontend):
 
   @property
   def cmd(self):
-    cmd_list: List[str] = list()
+    cmd_list: List[str] = []
 
     # get deepstate args and remove "-- binary"
     deepstate_args = self.build_cmd([], input_symbol='eclipser.input')
@@ -117,17 +117,14 @@ class Eclipser(FuzzerFrontend):
       cmd_list.extend(["--maxfilelen", str(self.max_input_size)])
 
     # some timeout is required by eclipser
-    if self.timeout and self.timeout != 0:
-      timeout = self.timeout
-    else:
-      timeout = 99999
+    timeout = self.timeout if self.timeout and self.timeout != 0 else 99999
     cmd_list.extend(["--timelimit", str(timeout)])
 
     for key, val in self.fuzzer_args:
       if len(key) == 1:
-        cmd_list.append('-{}'.format(key))
+        cmd_list.append(f'-{key}')
       else:
-        cmd_list.append('--{}'.format(key))
+        cmd_list.append(f'--{key}')
       if val is not None:
         cmd_list.append(val)
 
@@ -191,8 +188,10 @@ class Eclipser(FuzzerFrontend):
     TODO: report more metrics
     """
 
-    num_crashes: int = len([crash for crash in os.listdir(self.output_test_dir + "/crash")
-                       if os.path.isfile(crash)])
+    num_crashes: int = len([
+        crash for crash in os.listdir(f"{self.output_test_dir}/crash")
+        if os.path.isfile(crash)
+    ])
     return dict({
         "Unique Crashes": num_crashes
     })

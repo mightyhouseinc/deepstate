@@ -32,45 +32,43 @@ def logrun(cmd, file, timeout, break_callback=None, filters=[]):
   oldContentLen = 0
   start = time.time()
   lastOutput = time.time()
-  inf = open(file, 'r')
-  while (proc.poll() is None) and ((time.time() - start) < timeout):
-    inf.seek(0, 2)
-    newContentLen = inf.tell()
+  with open(file, 'r') as inf:
+    while (proc.poll() is None) and ((time.time() - start) < timeout):
+      inf.seek(0, 2)
+      newContentLen = inf.tell()
 
-    if newContentLen > oldContentLen:
-      inf.seek(oldContentLen, 0)
-      newContent = inf.read()
-      printLines = newContent.split("\n")
-      for f in filters:
-        printLines = list(filter(lambda line: f not in line, printLines))
-      printContent = "\n".join(printLines)
-      sys.stderr.write(printContent)
-      sys.stderr.flush()
-      oldContentLen = newContentLen
-      lastOutput = time.time()
+      if newContentLen > oldContentLen:
+        inf.seek(oldContentLen, 0)
+        newContent = inf.read()
+        printLines = newContent.split("\n")
+        for f in filters:
+          printLines = list(filter(lambda line: f not in line, printLines))
+        printContent = "\n".join(printLines)
+        sys.stderr.write(printContent)
+        sys.stderr.flush()
+        oldContentLen = newContentLen
+        lastOutput = time.time()
 
-      if break_callback and break_callback(newContent):
-        callback_break = True
-        break
+        if break_callback and break_callback(newContent):
+          callback_break = True
+          break
 
-    if (time.time() - lastOutput) > 300:
-      sys.stderr.write(".")
-      sys.stderr.flush()
-      lastOutput = time.time()
+      if (time.time() - lastOutput) > 300:
+        sys.stderr.write(".")
+        sys.stderr.flush()
+        lastOutput = time.time()
 
-    time.sleep(0.5)
+      time.sleep(0.5)
 
-  totalTime = time.time() - start
-  sys.stderr.write("\n")
+    totalTime = time.time() - start
+    sys.stderr.write("\n")
 
-  inf.seek(oldContentLen, 0)
-  newContent = inf.read()
-  sys.stderr.write(newContent)
-  sys.stderr.flush()
-  inf.seek(0, 0)
-  contents = inf.read()
-  inf.close()
-
+    inf.seek(oldContentLen, 0)
+    newContent = inf.read()
+    sys.stderr.write(newContent)
+    sys.stderr.flush()
+    inf.seek(0, 0)
+    contents = inf.read()
   rv = [proc.returncode, contents]
   if callback_break:
     rv[0] = "CALLBACK_BREAK"
@@ -88,9 +86,9 @@ def logrun(cmd, file, timeout, break_callback=None, filters=[]):
     pass
 
   sys.stderr.write("\nDONE\n\n")
-  sys.stderr.write("TOTAL EXECUTION TIME: " + str(totalTime) + "\n")
-  sys.stderr.write("RETURN VALUE: " + str(proc.returncode) + "\n")
-  sys.stderr.write("RETURNING AS RESULT: " + str(rv[0]) + "\n")
+  sys.stderr.write(f"TOTAL EXECUTION TIME: {str(totalTime)}" + "\n")
+  sys.stderr.write(f"RETURN VALUE: {str(proc.returncode)}" + "\n")
+  sys.stderr.write(f"RETURNING AS RESULT: {str(rv[0])}" + "\n")
   sys.stderr.write("=" * 80 + "\n")
 
   if tmp_out_dir:

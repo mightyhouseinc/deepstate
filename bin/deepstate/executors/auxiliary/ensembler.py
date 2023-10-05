@@ -120,11 +120,11 @@ class Ensembler(FuzzerFrontend):
         L.warn("No seed synchronization dir specified, using `sync`.")
         self.sync_dir = "sync"
 
-    sync_dir = self.output_test_dir + "/" + self.sync_dir
+    sync_dir = f"{self.output_test_dir}/{self.sync_dir}"
     if not os.path.isdir(sync_dir):
       L.warn("Sync directory does not exist. Creating.")
       os.mkdir(sync_dir)
-    elif os.path.isdir(sync_dir) and len([f for f in os.listdir(sync_dir)]) != 0:
+    elif os.path.isdir(sync_dir) and len(list(os.listdir(sync_dir))) != 0:
       L.error("Sync directory exists and is not empty. Exiting.")
       sys.exit(1)
 
@@ -182,7 +182,8 @@ class Ensembler(FuzzerFrontend):
     self.pre_exec()
 
     # initialize target - test str if user specified a harness, or a list to already-compiled binaries
-    target = self.test if not self.test_dir else list([f for f in os.listdir(self.test_dir)])
+    target = (self.test if not self.test_dir else list(
+        list(os.listdir(self.test_dir))))
     L.info("Provisioning environment with target `%s`", target)
 
     self.fuzzers = list(self._init_fuzzers())
@@ -214,7 +215,7 @@ class Ensembler(FuzzerFrontend):
     L.info("Provisioning test case into workspace with instrumented binaries")
     for fuzzer in self.fuzzers:
 
-      test_name = self.workspace + "/" + test_case.split(".")[0]
+      test_name = f"{self.workspace}/" + test_case.split(".")[0]
       L.debug("Compiling `%s` for fuzzer `%s`", test_name, fuzzer)
 
       cmd_map = {
@@ -232,7 +233,7 @@ class Ensembler(FuzzerFrontend):
       L.info("Compiling test case %s as `%s` with %s", test_case, test_name, fuzzer)
       fuzzer.compile()
 
-    return [test for test in os.listdir(self.workspace)]
+    return list(os.listdir(self.workspace))
 
 
   def report(self):
@@ -277,24 +278,32 @@ class Ensembler(FuzzerFrontend):
     # TODO(alan): migrate instantiation to provision or _provision_workspace
     for fuzzer, binary in self.targets.items():
       fuzzer_args = {
-
-        # default fuzzer execution related options
-        "timeout": self.timeout,
-        "binary": self.workspace + "/" + binary[0],
-        "input_seeds": self.input_seeds,
-        "output_test_dir": "{}/{}_{}_out".format(self.output_test_dir, str(fuzzer), _rand_id()),
-        "dictionary": None,
-        "max_input_size": self.max_input_size if self.max_input_size else 8192,
-        "mem_limit": "none",
-        "which_test": self.which_test,
-        "target_args": self.target_args,
-
-        # set sync options for all fuzzers (TODO): configurable exec cycle
-        # set sync_out to output global fuzzer stats, set as default
-        "enable_sync": True,
-        "sync_cycle": self.sync_cycle,
-        "sync_dir": self.sync_dir,
-        "sync_out": not self.no_global
+          "timeout":
+          self.timeout,
+          "binary":
+          f"{self.workspace}/{binary[0]}",
+          "input_seeds":
+          self.input_seeds,
+          "output_test_dir":
+          "{}/{}_{}_out".format(self.output_test_dir, str(fuzzer), _rand_id()),
+          "dictionary":
+          None,
+          "max_input_size":
+          self.max_input_size if self.max_input_size else 8192,
+          "mem_limit":
+          "none",
+          "which_test":
+          self.which_test,
+          "target_args":
+          self.target_args,
+          "enable_sync":
+          True,
+          "sync_cycle":
+          self.sync_cycle,
+          "sync_dir":
+          self.sync_dir,
+          "sync_out":
+          not self.no_global,
       }
 
       # TODO(alan): store default dict in each fuzzer's _ARGS such that we don't need to
@@ -303,14 +312,24 @@ class Ensembler(FuzzerFrontend):
       # manually set and override options for Angora, due to the requirement of two binaries
       if isinstance(fuzzer, Angora):
         fuzzer_args.update({
-          "binary": next((self.workspace + "/" + b for b in binary if ".fast" in b), None),
-          "taint_binary": next((self.workspace + "/" + b for b in binary if ".taint" in b), None),
-          "no_afl": False,
-          "mode": "llvm",
-          "no_exploration": False
+            "binary":
+            next(
+                (f"{self.workspace}/{b}" for b in binary if ".fast" in b),
+                None,
+            ),
+            "taint_binary":
+            next(
+                (f"{self.workspace}/{b}" for b in binary if ".taint" in b),
+                None,
+            ),
+            "no_afl":
+            False,
+            "mode":
+            "llvm",
+            "no_exploration":
+            False,
         })
 
-      # manually set and override "AFL modes" that configured during execution
       elif isinstance(fuzzer, AFL):
         fuzzer_args.update({
           "parallel_mode": False,
@@ -321,7 +340,6 @@ class Ensembler(FuzzerFrontend):
           "file": None
         })
 
-      # manually set Honggfuzz options
       elif isinstance(fuzzer, Honggfuzz):
         fuzzer_args.update({
           "iterations": None,

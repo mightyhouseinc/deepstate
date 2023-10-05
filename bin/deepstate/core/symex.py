@@ -98,7 +98,7 @@ class SymexFrontend(AnalysisBackend):
       return cls._ARGS
 
     parser = argparse.ArgumentParser(
-        description="Symbolically execute unit tests with {}".format(cls.NAME))
+        description=f"Symbolically execute unit tests with {cls.NAME}")
 
     parser.add_argument(
         "--take_over", action='store_true',
@@ -213,18 +213,20 @@ class SymexFrontend(AnalysisBackend):
     self.context['abandoned'] = False
     self.context['log'] = []
     for level in LOG_LEVEL_INT_TO_LOGGER:
-      self.context['stream_{}'.format(level)] = []
+      self.context[f'stream_{level}'] = []
 
     self.context['info'] = info
-    self.log_message(LOG_LEVEL_TRACE, "Running {} from {}({})".format(
-        info.name, info.file_name, info.line_number))
+    self.log_message(
+        LOG_LEVEL_TRACE,
+        f"Running {info.name} from {info.file_name}({info.line_number})",
+    )
 
     apis = self.context['apis']
 
     # Create the symbols that feed API functions like `DeepState_Int`.
     symbols = []
     for i, ea in enumerate(range(apis['InputBegin'], apis['InputEnd'])):
-      symbol = self.create_symbol('DEEP_INPUT_{}'.format(i), 8)
+      symbol = self.create_symbol(f'DEEP_INPUT_{i}', 8)
       self.write_uint8_t(ea, symbol)
       symbols.append(symbol)
 
@@ -372,7 +374,7 @@ class SymexFrontend(AnalysisBackend):
       logger(self._stream_to_message(stream))
 
     # Print out the first few input bytes to be helpful.
-    lots_of_bytes = len(input_bytes) > 20 and " ..." or ""
+    lots_of_bytes = " ..." if len(input_bytes) > 20 else ""
     bytes_to_show = min(20, len(input_bytes))
     LOGGER.trace("Input: %s%s", 
         " ".join("{:02x}".format(b) for b in input_bytes[:bytes_to_show]),
@@ -416,7 +418,7 @@ class SymexFrontend(AnalysisBackend):
     solutions = self.concretize_many(arg, 2)
     if not solutions:
       return 0
-    elif 1 == len(solutions):
+    elif len(solutions) == 1:
       if self.is_symbolic(arg):
         self.add_constraint(arg == solutions[0])
       return 0
@@ -440,9 +442,8 @@ class SymexFrontend(AnalysisBackend):
       expr, _ = self.read_c_string(expr_ea, concretize=False)
       file, _ = self.read_c_string(file_ea, concretize=False)
       line = self.concretize(line, constrain=True)
-      self.log_message(
-        LOG_LEVEL_CRITICAL, "Failed to add assumption {} in {}:{}".format(
-            expr, file, line))
+      self.log_message(LOG_LEVEL_CRITICAL,
+                       f"Failed to add assumption {expr} in {file}:{line}")
       self.abandon_test()
 
   def api_concretize_data(self, begin_ea, end_ea):
@@ -483,7 +484,7 @@ class SymexFrontend(AnalysisBackend):
       self.api_fail()
     else:
       info = self.context['info']
-      self.log_message(LOG_LEVEL_TRACE, "Passed: {}".format(info.name))
+      self.log_message(LOG_LEVEL_TRACE, f"Passed: {info.name}")
       self.pass_test()
 
   def api_crash(self):
@@ -491,7 +492,7 @@ class SymexFrontend(AnalysisBackend):
     having crashed, and stops further execution."""
     self.context['crashed'] = True
     info = self.context['info']
-    self.log_message(LOG_LEVEL_ERROR, "Crashed: {}".format(info.name))
+    self.log_message(LOG_LEVEL_ERROR, f"Crashed: {info.name}")
     self.crash_test()
 
   def api_fail(self):
@@ -499,7 +500,7 @@ class SymexFrontend(AnalysisBackend):
     having failed, and stops further execution."""
     self.context['failed'] = True
     info = self.context['info']
-    self.log_message(LOG_LEVEL_ERROR, "Failed: {}".format(info.name))
+    self.log_message(LOG_LEVEL_ERROR, f"Failed: {info.name}")
     self.fail_test()
 
   def api_soft_fail(self):
@@ -513,7 +514,7 @@ class SymexFrontend(AnalysisBackend):
     info = self.context['info']
     ea = self.concretize(arg, constrain=True)
     self.log_message(LOG_LEVEL_CRITICAL, self.read_c_string(ea)[0])
-    self.log_message(LOG_LEVEL_CRITICAL, "Abandoned: {}".format(info.name))
+    self.log_message(LOG_LEVEL_CRITICAL, f"Abandoned: {info.name}")
     self.abandon_test()
 
   def api_log(self, level, ea):
@@ -549,7 +550,7 @@ class SymexFrontend(AnalysisBackend):
       b, _ = self.read_uint8_t(uint64_ea + i, concretize=False)
       uint64_bytes.append(b)
 
-    stream_id = 'stream_{}'.format(level)
+    stream_id = f'stream_{level}'
     stream = list(self.context[stream_id])
     stream.append((val_type, format_str, unpack_str, uint64_bytes))
     self.context[stream_id] = stream
@@ -577,7 +578,7 @@ class SymexFrontend(AnalysisBackend):
     format_str = self.read_c_string(format_ea)[0]
     print_str = self.read_c_string(str_ea, concretize=False)[0]
 
-    stream_id = 'stream_{}'.format(level)
+    stream_id = f'stream_{level}'
     stream = list(self.context[stream_id])
     stream.append((str, format_str, None, print_str))
     self.context[stream_id] = stream
@@ -587,7 +588,7 @@ class SymexFrontend(AnalysisBackend):
     for level `level`."""
     level = self.concretize(level, constrain=True)
     assert level in LOG_LEVEL_INT_TO_LOGGER
-    stream_id = 'stream_{}'.format(level)
+    stream_id = f'stream_{level}'
     self.context[stream_id] = []
 
   def api_log_stream(self, level):
@@ -595,7 +596,7 @@ class SymexFrontend(AnalysisBackend):
     for level `level` into a log for level `level`."""
     level = self.concretize(level, constrain=True)
     assert level in LOG_LEVEL_INT_TO_LOGGER
-    stream_id = 'stream_{}'.format(level)
+    stream_id = f'stream_{level}'
     stream = self.context[stream_id]
     if len(stream):
       self.context[stream_id] = []

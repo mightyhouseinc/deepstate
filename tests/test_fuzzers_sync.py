@@ -39,7 +39,7 @@ class CrashFuzzerTest(TestCase):
       # run command
       proc = subprocess.Popen([f"deepstate-{fuzzer}"] + arguments)
       proc.communicate()
-      compiled_files = glob(output_test_name + f"*.{fuzzer}")
+      compiled_files = glob(f"{output_test_name}*.{fuzzer}")
 
       # check output
       self.assertEqual(proc.returncode, 0)
@@ -47,10 +47,13 @@ class CrashFuzzerTest(TestCase):
         self.assertTrue(path.isfile(compiled_file))
 
       # return compiled file(s)
-      # if Angora fuzzer, file.taint should be before file.fast 
-      if any([compiled_file.endswith('.taint.angora') for compiled_file in compiled_files]):
-        compiled_files = sorted(compiled_files, reverse=True) 
+      # if Angora fuzzer, file.taint should be before file.fast
+      if any(
+          compiled_file.endswith('.taint.angora')
+          for compiled_file in compiled_files):
+        compiled_files = sorted(compiled_files, reverse=True)
       return compiled_files
+
 
 
     def do_fuzz(fuzzer, workspace_dir, sync_dir, compiled_files, output_from_fuzzer=None):
@@ -99,7 +102,7 @@ class CrashFuzzerTest(TestCase):
 
       start_time = int(time.time())
 
-      while any([v["no_crashes"] < 1 for _, v in fuzzers.items()]):
+      while any(v["no_crashes"] < 1 for _, v in fuzzers.items()):
         if timeout:
           self.assertLess(time.time() - start_time, timeout, msg="TIMEOUT")
 
@@ -138,6 +141,7 @@ class CrashFuzzerTest(TestCase):
 
       print("CRASHING - done")
       print("-"*50)
+
 
 
     def do_sync_test(output_from_fuzzer=None):

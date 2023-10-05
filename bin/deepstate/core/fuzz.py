@@ -156,7 +156,7 @@ class FuzzerFrontend(AnalysisBackend):
 
 
   def __repr__(self) -> str:
-    return "{}".format(self.__class__.__name__)
+    return f"{self.__class__.__name__}"
 
 
   @classmethod
@@ -197,7 +197,8 @@ class FuzzerFrontend(AnalysisBackend):
       parser = cls.parser
     else:
       L.debug("Instantiating new ArgumentParser")
-      parser = argparse.ArgumentParser(description="Use {} fuzzer as a backend for DeepState".format(str(cls)))
+      parser = argparse.ArgumentParser(
+          description=f"Use {str(cls)} fuzzer as a backend for DeepState")
 
     # Fuzzer execution options
     parser.add_argument(
@@ -369,7 +370,8 @@ class FuzzerFrontend(AnalysisBackend):
       raise FuzzFrontendError("User-specified test binary conflicts with compiling from source.")
 
     if not os.path.isfile(lib_path):
-      raise FuzzFrontendError("No {}-instrumented DeepState static library found in {}".format(self, lib_path))
+      raise FuzzFrontendError(
+          f"No {self}-instrumented DeepState static library found in {lib_path}")
     L.debug("Static library path: %s", lib_path)
 
     # initialize compiler envvars
@@ -556,9 +558,9 @@ class FuzzerFrontend(AnalysisBackend):
     # append any other DeepState flags
     for key, val in self.target_args:
       if len(key) == 1:
-        cmd_list.append('-{}'.format(key))
+        cmd_list.append(f'-{key}')
       else:
-        cmd_list.append('--{}'.format(key))
+        cmd_list.append(f'--{key}')
       if val is not None:
         cmd_list.append(val)
 
@@ -708,7 +710,7 @@ class FuzzerFrontend(AnalysisBackend):
         try:
           # sleep/communicate for `self.sync_cycle` time
           timeout_one_cycle: int = wait_time
-          if wait_time > time_left:
+          if timeout_one_cycle > time_left:
             timeout_one_cycle = int(time_left)
 
           L.debug("One cycle `communicate` with timeout %d.", timeout_one_cycle)
@@ -717,7 +719,7 @@ class FuzzerFrontend(AnalysisBackend):
           # fuzzer process exited
           # it's fine if returncode is 0 or 1 for libfuzzer 
           if self.proc.returncode == 0 or \
-              (self.proc.returncode == 1 and self.name == "libFuzzer"):
+                (self.proc.returncode == 1 and self.name == "libFuzzer"):
             L.info("Fuzzer %s (PID %d) exited with return code %d.",
                       self.name, self.proc.pid, self.proc.returncode)
             self.fuzzer_return_code = 0
@@ -732,22 +734,18 @@ class FuzzerFrontend(AnalysisBackend):
             raise FuzzFrontendError(f"Fuzzer {self.name} (PID {self.proc.pid}) exited "
                                     f"with return code {self.proc.returncode}.")
 
-        # Timeout, just continue to management step
         except subprocess.TimeoutExpired:
           L.debug("One cycle timeout.")
 
-        # Any OS-specific errors encountered
         except OSError as e:
           L.error("%s run interrupted due to OSError: %s.", self.name, e)
           run_one_fuzzer_process = False
 
-        # SIGINT stops fuzzer, but continues frontend execution
         except KeyboardInterrupt:
           L.info("Stopped the %s fuzzer.", self.name)
           run_one_fuzzer_process = False
           run_fuzzer = False
 
-        # bad things happed, inform user and exit
         except Exception:
           L.error(traceback.format_exc())      
           L.error("Exception during fuzzer %s run.", self.name)
@@ -780,7 +778,7 @@ class FuzzerFrontend(AnalysisBackend):
       if run_fuzzer:
         self.post_exec()
 
-      # and... maybe loop again!
+        # and... maybe loop again!
 
     if not self.fuzzer_out:
       fuzzer_out_file.close()
@@ -820,11 +818,6 @@ class FuzzerFrontend(AnalysisBackend):
 
     Should return False if self.sync_dir is None.
     """
-    if not self.sync_dir:
-      return False
-
-    # if time.time() - self.start_time > 20:
-    #   return True
     return False
 
 
@@ -895,7 +888,7 @@ class FuzzerFrontend(AnalysisBackend):
     ]
 
     # subclass should invoke with list of pattern ignores
-    if len(excludes) > 0:
+    if excludes:
       rsync_cmd += [f"--exclude={e}" for e in excludes]
 
     rsync_cmd += [

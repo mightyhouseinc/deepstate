@@ -50,9 +50,9 @@ class AFL(FuzzerFrontend):
   def compile(self) -> None: # type: ignore
     lib_path: str = "/usr/local/lib/libdeepstate_AFL.a"
 
-    flags: List[str] = list()
+    flags: List[str] = []
     if self.compiler_args:
-      flags += [arg for arg in self.compiler_args.split(" ")]
+      flags += list(self.compiler_args.split(" "))
     flags.append("-ldeepstate_AFL")
 
     super().compile(lib_path, flags, self.out_test_name)
@@ -77,7 +77,7 @@ class AFL(FuzzerFrontend):
     # check if CPU scaling governor is set to `performance`
     if os.path.isfile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"):
       with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
-        if not "perf" in f.read(4):
+        if "perf" not in f.read(4):
           with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq") as f_min:
             with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq") as f_max:
               if f_min.read() != f_max.read():
@@ -98,12 +98,7 @@ class AFL(FuzzerFrontend):
 
   @property
   def cmd(self):
-    cmd_list: List[str] = list()
-
-    # guaranteed arguments
-    cmd_list.extend([
-      "-o", self.output_test_dir,  # auto-create, reusable
-    ])
+    cmd_list: List[str] = ["-o", self.output_test_dir]
 
     arg_keys = map(lambda x:x[0], self.fuzzer_args)
     if ("d" not in arg_keys) and ("S" not in arg_keys):
@@ -118,9 +113,9 @@ class AFL(FuzzerFrontend):
       if key == "d":
         cmd_list.extend(["-S", "the_fuzzer"])
       elif len(key) == 1:
-        cmd_list.append('-{}'.format(key))
+        cmd_list.append(f'-{key}')
       else:
-        cmd_list.append('--{}'.format(key))
+        cmd_list.append(f'--{key}')
       if val is not None:
         cmd_list.append(val)
 

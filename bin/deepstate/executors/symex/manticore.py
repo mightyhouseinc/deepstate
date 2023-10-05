@@ -20,11 +20,10 @@ try:
     import manticore
     import manticore.native
 except Exception as e:
-  if "Z3NotFoundError" in repr(type(e)):
+    if "Z3NotFoundError" not in repr(type(e)):
+        raise
     print("Manticore requires Z3 to be installed.")
     sys.exit(255)
-  else:
-    raise
 import traceback
 
 from manticore.utils import config
@@ -135,10 +134,8 @@ class DeepManticore(SymexFrontend):
     return concrete_val
 
   def concretize_many(self, val, max_num):
-    assert 0 < max_num
-    if isinstance(val, (int)):
-      return [val]
-    return self.state.solve_n(val, max_num)
+      assert 0 < max_num
+      return [val] if isinstance(val, (int)) else self.state.solve_n(val, max_num)
 
   def add_constraint(self, expr):
     if self.is_symbolic(expr):
@@ -321,19 +318,18 @@ def done_test(_, state, reason):
 
 
 def find_symbol_ea(m, name):
-  try:
-    ea = m.resolve(name)
-    if ea:
-      return ea
-  except:
-    pass
+    try:
+        if ea := m.resolve(name):
+            return ea
+    except:
+      pass
 
-  try:
-    return m.resolve("_{}".format(name))
-  except:
-    pass
+    try:
+        return m.resolve(f"_{name}")
+    except:
+      pass
 
-  return 0
+    return 0
 
 
 def do_run_test(state, apis, test, workspace, hook_test=False):
@@ -394,27 +390,27 @@ def run_test(state, apis, test, workspace, hook_test=False):
 
 
 def run_tests(args, state, apis, workspace):
-  mc = DeepManticore(state)
-  mc.context['apis'] = apis
-  tests = mc.find_test_cases()
+    mc = DeepManticore(state)
+    mc.context['apis'] = apis
+    tests = mc.find_test_cases()
 
-  if not args.which_test:
-    L.info("Running %d tests across %d workers", len(tests), args.num_workers)
+    if not args.which_test:
+        L.info("Running %d tests across %d workers", len(tests), args.num_workers)
 
-    for test in tests:
-      run_test(state, apis, test, workspace)
+        for test in tests:
+          run_test(state, apis, test, workspace)
 
-  else:
-    test = [t for t in tests if t.name == args.which_test]
-    if len(test) == 0:
-      L.error("No test found with specified name.")
-      exit(1)
-    elif len(test) > 1:
-      L.error("Multiple tests found with same name.")
-      exit(1)
+    else:
+        test = [t for t in tests if t.name == args.which_test]
+        if not test:
+            L.error("No test found with specified name.")
+            exit(1)
+        elif len(test) > 1:
+          L.error("Multiple tests found with same name.")
+          exit(1)
 
-    L.info("Running `%d` test across %d workers", args.which_test, args.num_workers)
-    run_test(state, apis, test[0], workspace)
+        L.info("Running `%d` test across %d workers", args.which_test, args.num_workers)
+        run_test(state, apis, test[0], workspace)
 
 
 def get_base(m):
@@ -514,5 +510,5 @@ def main():
     return main_unit_test(m, args)
 
 
-if "__main__" == __name__:
-  exit(main())
+if __name__ == "__main__":
+    exit(main())
